@@ -59,7 +59,6 @@ namespace Mesen.Debugger.ViewModels
 				},
 				new ContextMenuAction() {
 					ActionType = ActionType.SetProfilerFilter,
-					IsEnabled = () => SelectedTab?.Selection.SelectedItem != null,
 					OnClick = () => {
 						var item = SelectedTab?.Selection.SelectedItem;
 						if(item != null && SelectedTab != null)

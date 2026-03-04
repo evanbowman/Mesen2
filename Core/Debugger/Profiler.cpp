@@ -21,10 +21,29 @@ Profiler::~Profiler()
 {
 }
 
+
+int32_t Profiler::CreateKey(AddressInfo &addr)
+{
+    return addr.Address | ((uint8_t)addr.Type << 24);
+}
+
+
+void Profiler::SetFilter(AddressInfo &addr)
+{
+    _filter = CreateKey(addr);
+}
+
+
+void Profiler::ClearFilter()
+{
+    _filter.reset();
+}
+
+
 void Profiler::StackFunction(AddressInfo &addr, StackFrameFlags stackFlag)
 {
 	if(addr.Address >= 0) {
-		uint32_t key = addr.Address | ((uint8_t)addr.Type << 24);
+		uint32_t key = CreateKey(addr);
 		if(_functions.find(key) == _functions.end()) {
 			_functions[key] = ProfiledFunction();
 			_functions[key].Address = addr;
@@ -56,14 +75,31 @@ void Profiler::StackFunction(AddressInfo &addr, StackFrameFlags stackFlag)
 void Profiler::UpdateCycles()
 {
 	uint64_t masterClock = _cpuDebugger->GetCpuCycleCount(true);
-	
+
+    int filterFunctionSlot = -1;
+    int stackDepthFilter = 0;
+    if (_filter) {
+        int32_t len = (int32_t)_functionStack.size();
+        for(int32_t i = len - 1; i >= 0; i--) {
+            if (_functionStack[i] == *_filter) {
+                filterFunctionSlot = i;
+                break;
+            }
+        }
+        if (filterFunctionSlot == -1) {
+            _prevMasterClock = masterClock;
+            return;
+        }
+        stackDepthFilter = filterFunctionSlot;
+    }
+
 	ProfiledFunction& func = _functions[_currentFunction];
 	uint64_t clockGap = masterClock - _prevMasterClock;
 	func.ExclusiveCycles += clockGap;
 	func.InclusiveCycles += clockGap;
-	
+
 	int32_t len = (int32_t)_functionStack.size();
-	for(int32_t i = len - 1; i >= 0; i--) {
+	for(int32_t i = len - 1; i >= stackDepthFilter; i--) {
 		_functions[_functionStack[i]].InclusiveCycles += clockGap;
 		if(_stackFlags[i] != StackFrameFlags::None) {
 			//Don't apply inclusive times to stack frames before an IRQ/NMI
@@ -114,7 +150,7 @@ void Profiler::ResetState()
 void Profiler::InternalReset()
 {
 	ResetState();
-	
+
 	_functions.clear();
 	_functions[ResetFunctionIndex] = ProfiledFunction();
 	_functions[ResetFunctionIndex].Address = { ResetFunctionIndex, MemoryType::None };
@@ -123,7 +159,7 @@ void Profiler::InternalReset()
 void Profiler::GetProfilerData(ProfiledFunction* profilerData, uint32_t& functionCount)
 {
 	DebugBreakHelper helper(_debugger);
-	
+
 	UpdateCycles();
 
 	functionCount = 0;

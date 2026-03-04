@@ -32,12 +32,19 @@ private:
 	uint64_t _prevMasterClock = 0;
 	int32_t _currentFunction = -1;
 
+	std::optional<int32_t> _filter;
+
 	void InternalReset();
 	void UpdateCycles();
+
+	int32_t CreateKey(AddressInfo &addr);
 
 public:
 	Profiler(Debugger* debugger, IDebugger* cpuDebugger);
 	~Profiler();
+
+	void SetFilter(AddressInfo &parentFunction);
+	void ClearFilter();
 
 	void StackFunction(AddressInfo& addr, StackFrameFlags stackFlag);
 	void UnstackFunction();

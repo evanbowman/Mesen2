@@ -105,6 +105,16 @@ extern "C"
 		WithToolVoid(GetCallstackManager(cpuType), GetProfiler()->GetProfilerData(profilerData, functionCount));
 	}
 
+	DllExport void __stdcall SetProfilerFilter(CpuType cpuType, AddressInfo addr)
+	{
+		WithToolVoid(GetCallstackManager(cpuType), GetProfiler()->SetFilter(addr));
+	}
+
+	DllExport void __stdcall ClearProfilerFilter(CpuType cpuType)
+	{
+		WithToolVoid(GetCallstackManager(cpuType), GetProfiler()->ClearFilter());
+	}
+
 	DllExport void __stdcall ResetProfiler(CpuType cpuType) { WithToolVoid(GetCallstackManager(cpuType), GetProfiler()->Reset()); }
 
 	DllExport void __stdcall GetConsoleState(BaseState& state, ConsoleType consoleType) { WithDebugger(void, GetConsoleState(state, consoleType)); }

@@ -882,6 +882,10 @@ namespace Mesen.Debugger.Utilities
 		[IconFile("NextArrow")]
 		NavigateForward,
 
+		[IconFile("Find")]
+		SetProfilerFilter,
+		[IconFile("Close")]
+		ClearProfilerFilter,
 		[IconFile("Close")]
 		ResetProfilerData,
 		[IconFile("Copy")]

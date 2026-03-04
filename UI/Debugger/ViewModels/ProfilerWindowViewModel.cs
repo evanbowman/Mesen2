@@ -57,6 +57,19 @@ namespace Mesen.Debugger.ViewModels
 					Shortcut = () => ConfigManager.Config.Debug.Shortcuts.Get(DebuggerShortcut.Copy),
 					OnClick = () => wnd?.GetVisualDescendants().Where(a => a is DataBox).Cast<DataBox>().FirstOrDefault()?.CopyToClipboard()
 				},
+				new ContextMenuAction() {
+					ActionType = ActionType.SetProfilerFilter,
+					OnClick = () => {
+						var item = SelectedTab?.Selection.SelectedItem;
+						if(item != null && SelectedTab != null)
+							SelectedTab.SetFilter(item.FuncData, SelectedTab.CpuType);
+					}
+				},
+				new ContextMenuAction() {
+					ActionType = ActionType.ClearProfilerFilter,
+					IsEnabled = () => SelectedTab?.HasFilter ?? false,
+					OnClick = () => SelectedTab?.ClearFilter()
+				},
 				new ContextMenuSeparator(),
 				new ContextMenuAction() {
 					ActionType = ActionType.Exit,
@@ -163,6 +176,25 @@ namespace Mesen.Debugger.ViewModels
 			return null;
 		}
 
+		[Reactive] public string FilterLabel { get; set; } = "";
+		private AddressInfo? _filterAddress = null;
+
+		public void SetFilter(ProfiledFunction func, CpuType cpuType)
+		{
+			_filterAddress = func.Address;
+			FilterLabel = "Filter: " + func.GetFunctionName(cpuType);
+			DebugApi.SetProfilerFilter(CpuType, func.Address);
+			ResetData();
+		}
+
+		public void ClearFilter()
+		{
+			_filterAddress = null;
+			FilterLabel = "";
+			DebugApi.ClearProfilerFilter(CpuType);
+			ResetData();
+		}
+
 		public void ResetData()
 		{
 			DebugApi.ResetProfiler(CpuType);
@@ -188,7 +220,9 @@ namespace Mesen.Debugger.ViewModels
 			Sort();
 
 			UInt64 totalCycles = 0;
-			ProfiledFunction[] profilerData = _profilerData;
+			ProfiledFunction[] profilerData = HasFilter
+				? _profilerData.Where(f => f.InclusiveCycles > 0).ToArray()
+				: _profilerData;
 			foreach(ProfiledFunction f in profilerData) {
 				totalCycles += f.ExclusiveCycles;
 			}
@@ -202,6 +236,8 @@ namespace Mesen.Debugger.ViewModels
 				GridData[i].Update(profilerData[i], CpuType, _totalCycles);
 			}
 		}
+
+		public bool HasFilter => _filterAddress != null;
 
 		public void SortCommand(object? param)
 		{
@@ -270,6 +306,7 @@ namespace Mesen.Debugger.ViewModels
 			}
 		}
 
+		public ProfiledFunction FuncData => _funcData;
 		public string ExclusiveCycles { get; set; } = "";
 		public string InclusiveCycles { get; set; } = "";
 		public string CallCount { get; set; } = "";

@@ -3690,6 +3690,8 @@ E
 
 			<Value ID="CopyToClipboard">Copy to clipboard</Value>
 			<Value ID="ResetProfilerData">Reset profiler data</Value>
+                        <Value ID="SetProfilerFilter">Set filter</Value>
+                        <Value ID="ClearProfilerFilter">Clear filter</Value>
 		</Enum>
 	</Enums>
 </Resources>

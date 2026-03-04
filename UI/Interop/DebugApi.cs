@@ -438,6 +438,9 @@ namespace Mesen.Interop
 			return callstack;
 		}
 
+		[DllImport(DllPath)] public static extern void SetProfilerFilter(CpuType type, AddressInfo addr);
+		[DllImport(DllPath)] public static extern void ClearProfilerFilter(CpuType type);
+
 		[DllImport(DllPath)] public static extern void ResetProfiler(CpuType type);
 		[DllImport(DllPath, EntryPoint = "GetProfilerData")] private static extern void GetProfilerDataWrapper(CpuType type, IntPtr profilerData, ref UInt32 functionCount);
 		public static unsafe int GetProfilerData(CpuType type, ref ProfiledFunction[] profilerData)
